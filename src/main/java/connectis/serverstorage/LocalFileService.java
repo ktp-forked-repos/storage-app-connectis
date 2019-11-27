@@ -39,7 +39,7 @@ public class LocalFileService {
     }
 
     private void createDirectory() {
-        servletContext.getRealPath("/uploads/");
+       uploads = servletContext.getRealPath("/uploads/");
         //uploads = "C:/uploads/";
 
 
