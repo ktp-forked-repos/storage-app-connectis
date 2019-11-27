@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.servlet.ServletContext;
@@ -21,10 +22,12 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+
 @Service
 public class LocalFileService {
 
@@ -39,8 +42,8 @@ public class LocalFileService {
     }
 
     private void createDirectory() {
-       uploads = servletContext.getRealPath("/uploads/");
-        //uploads = "C:/uploads/";
+        // uploads = servletContext.getRealPath("/uploads/");
+        uploads = "C:/uploads/";
 
 
         if (Strings.isBlank(uploads)) {
@@ -143,5 +146,29 @@ public class LocalFileService {
             }
         });
         return localFiles;
+    }
+
+    public ResponseEntity<?> uploadFile(MultipartFile file) {
+        Path path = Paths.get(uploads + file.getOriginalFilename());
+        try {
+            Files.copy(file.getInputStream(), path,
+                    StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            logger.error("Cannot get file:{}", e.getMessage());
+            return new ResponseEntity<>(e.getMessage(),
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        return new ResponseEntity<>(file.getOriginalFilename(),
+                HttpStatus.CREATED);
+    }
+
+    public ResponseEntity<?> deleteFile(String filename) {
+        File file = new File(uploads + filename);
+        if (file.delete()) {
+            logger.info("File was deleted: {}", file.getName());
+            return new ResponseEntity<>("File was deleted:" + file.getName(), HttpStatus.OK);
+        }
+        return new ResponseEntity<>("File not found:" + file.getName(), HttpStatus.NOT_FOUND);
     }
 }
